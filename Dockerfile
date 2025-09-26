@@ -1,20 +1,18 @@
-# Stage 1: Build
-FROM node:16 AS builder
+FROM node:16-alpine
+
 WORKDIR /app
+
 COPY package*.json ./
 RUN npm install
-COPY . .
-RUN npm run build
 
-# Stage 2: Run
-FROM node:16-alpine
-WORKDIR /app
-COPY --from=builder /app/build ./build
+COPY . .
 
 ARG BUILD_ID
 ARG GIT_COMMIT
 
 ENV BUILD_ID=${BUILD_ID}
 ENV GIT_COMMIT=${GIT_COMMIT}
+
+EXPOSE 8080
 
 CMD ["node", "server.js"]
