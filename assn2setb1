@@ -56,7 +56,7 @@ pipeline {
     }
   }
 
-  post {
+    post {
     success {
       slackSend(
         tokenCredentialId: env.SLACK_CRED_ID,
@@ -69,4 +69,16 @@ pipeline {
       slackSend(
         tokenCredentialId: env.SLACK_CRED_ID,
         channel: env.SLACK_CHANNEL,
-        color: 'warning',               /
+        color: 'warning',               // yellow
+        message: "UNSTABLE: ${env.JOB_NAME} #${env.BUILD_NUMBER} — <${env.BUILD_URL}|Open Build>"
+      )
+    }
+    failure {
+      slackSend(
+        tokenCredentialId: env.SLACK_CRED_ID,
+        channel: env.SLACK_CHANNEL,
+        color: 'danger',                // red
+        message: "FAILURE: ${env.JOB_NAME} #${env.BUILD_NUMBER} — <${env.BUILD_URL}|Open Build>"
+      )
+    }
+  }
