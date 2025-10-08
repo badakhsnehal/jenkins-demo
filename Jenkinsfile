@@ -1,6 +1,6 @@
 // Jenkinsfile (Declarative)
 pipeline {
-  agent { label 'builtin' }                 // use your builtin agent label
+  agent any       // use your builtin agent label
   environment {
     REPO       = 'https://github.com/badakhsnehal/jenkins-demo.git'
     BRANCH     = 'main'
