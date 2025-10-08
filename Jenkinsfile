@@ -2,7 +2,7 @@
 pipeline {
   agent { label 'builtin' }                 // use your builtin agent label
   environment {
-    REPO       = 'https://github.com/badakhsnehal/jenkins-demo.git'
+    REPO       = ' https://github.com/badakhsnehal/jenkins-demo.git'
     BRANCH     = 'main'
     IMAGE      = 'my-node-app'
     CONTAINER  = 'nodeserver'
