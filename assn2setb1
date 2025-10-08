@@ -2,7 +2,7 @@ pipeline {
   agent any        // make sure a node with this label exists
 
   tools {
-    maven 'maven-3.9.10'      // name must match Manage Jenkins -> Global Tool Configuration
+    maven 'maven-3.9.10.'      // name must match Manage Jenkins -> Global Tool Configuration
     jdk   'jdk-21.0.7'        // name must match Manage Jenkins -> Global Tool Configuration
   }
 
