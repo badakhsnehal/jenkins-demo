@@ -1,0 +1,51 @@
+pipeline {
+  agent any          // per requirement; see notes if your Jenkins has no 'builtin' label
+  environment {
+    IMAGE      = 'postgres:15-alpine'   // choose an official postgres image tag you prefer
+    CONTAINER  = 'some-postgres'
+    CRED_ID    = 'postgres-password'    // Jenkins credential ID (Secret Text)
+  }
+
+  stages {
+    stage('Run Postgres (secure)') {
+      steps {
+        echo "Starting Postgres container '$CONTAINER' (detached) using Jenkins credential id '$CRED_ID'"
+
+        // Use withCredentials to inject the secret into the shell, without hardcoding it
+        withCredentials([string(credentialsId: "${CRED_ID}", variable: 'PG_PASS')]) {
+          // use single-quoted (or triple-single) sh literal so Groovy doesn't interpolate the secret;
+          // the shell will read $PG_PASS which is set only for this closure
+          sh '''
+            # Run container detached; NOTE: no host port published for better security.
+            docker run -d --name "$CONTAINER" -e POSTGRES_PASSWORD="$PG_PASS" "$IMAGE"
+          '''
+        }
+
+        // give Postgres a little time to initialize (adjust if needed)
+        sh 'sleep 10'
+
+        // Optional: quick readiness check (non-fatal)
+        sh '''
+          if docker exec "$CONTAINER" pg_isready -U postgres >/dev/null 2>&1; then
+            echo "Postgres reports READY"
+          else
+            echo "Postgres not ready (check container logs)"
+          fi
+        '''
+
+        // Show running containers (explicit requirement)
+        sh 'docker ps -a'
+      }
+    }
+  }
+
+  post {
+    always {
+      echo "Cleaning up: stop & remove container (if present)"
+      sh 'docker stop "$CONTAINER" || true'
+      sh 'docker rm "$CONTAINER" || true'
+      echo "Final docker ps -a:"
+      sh 'docker ps -a || true'
+    }
+  }
+}
