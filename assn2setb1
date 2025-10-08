@@ -1,0 +1,72 @@
+pipeline {
+  agent any        // make sure a node with this label exists
+
+  tools {
+    maven 'maven-3.9.10'      // name must match Manage Jenkins -> Global Tool Configuration
+    jdk   'jdk-21.0.7'        // name must match Manage Jenkins -> Global Tool Configuration
+  }
+
+  environment {
+    REPO    = 'https://github.com/hkhcoder/vprofile-project.git'
+    BRANCH  = 'main'
+    WAR_SRC = 'target/vprofile-v2.war'
+    // Slack token credential id (create in Jenkins credentials as Secret text)
+    SLACK_CRED_ID = 'slack-token'
+    SLACK_CHANNEL = '#jenkinsserver'
+  }
+
+  stages {
+    stage('Checkout') {
+      steps {
+        echo "Cloning ${env.REPO} (branch ${env.BRANCH})"
+        git branch: "${env.BRANCH}", url: "${env.REPO}"
+      }
+    }
+
+    stage('Build (skip tests)') {
+      steps {
+        echo 'Building: mvn clean package -DskipTests'
+        sh 'mvn -B -DskipTests clean package'
+      }
+    }
+
+    stage('Prepare versions/ and copy WAR') {
+      steps {
+        echo 'Creating versions directory and copying WAR'
+        sh '''
+          mkdir -p versions
+          if [ -f "${WAR_SRC}" ]; then
+            cp -v "${WAR_SRC}" "versions/vprofile-v2-${BUILD_NUMBER}.war"
+          else
+            echo "ERROR: WAR not found at ${WAR_SRC}" >&2
+            ls -la target || true
+            exit 1
+          fi
+        '''
+      }
+    }
+
+    stage('Unit Tests') {
+      steps {
+        echo 'Running unit tests: mvn test'
+        sh 'mvn -B test'
+        // publish test results so Jenkins shows results per build
+        junit 'target/surefire-reports/*.xml'
+      }
+    }
+  }
+
+  post {
+    success {
+      slackSend(
+        tokenCredentialId: env.SLACK_CRED_ID,
+        channel: env.SLACK_CHANNEL,
+        color: 'good',                  // green
+        message: "SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER} — <${env.BUILD_URL}|Open Build>"
+      )
+    }
+    unstable {
+      slackSend(
+        tokenCredentialId: env.SLACK_CRED_ID,
+        channel: env.SLACK_CHANNEL,
+        color: 'warning',               /
