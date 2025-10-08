@@ -2,7 +2,7 @@
 pipeline {
   agent { label 'builtin' }                 // use your builtin agent label
   environment {
-    REPO       = ' https://github.com/badakhsnehal/jenkins-demo.git'
+    REPO       = 'https://github.com/badakhsnehal/jenkins-demo.git'
     BRANCH     = 'main'
     IMAGE      = 'my-node-app'
     CONTAINER  = 'nodeserver'
@@ -20,7 +20,7 @@ pipeline {
     stage('Build Docker image') {
       steps {
         echo "Building Docker image ${IMAGE}"
-        // prefer the Dockerfile in repo; fallback t'https://github.com/ajay-raut/spnodeserver.git'o simple build command
+        // prefer the Dockerfile in repo; fallback to simple build command
         sh 'docker --version || true'
         sh "docker build -t ${IMAGE} ."
       }
@@ -42,7 +42,7 @@ pipeline {
         sh "docker rm ${CONTAINER} || true"
       }
     }
-  }https://github.com/badakhsnehal/jenkins-demo
+  }
 
   post {
     failure {
